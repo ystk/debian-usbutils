@@ -80,6 +80,10 @@
 #define USB_CLASS_CCID			0x0b
 #endif
 
+#ifndef USB_DT_SS_ENDPOINT_COMP
+#define USB_DT_SS_ENDPOINT_COMP		0x30
+#endif
+
 #ifndef USB_CLASS_VIDEO
 #define USB_CLASS_VIDEO			0x0e
 #endif
@@ -759,6 +763,9 @@ static void dump_endpoint(struct usb_dev_handle *dev, struct usb_interface_descr
 				break;
 			case USB_DT_INTERFACE_ASSOCIATION:
 				dump_association(dev, buf);
+				break;
+			case USB_DT_SS_ENDPOINT_COMP:
+				printf("        bMaxBurst %15u\n", buf[2] + 1);
 				break;
 			default:
 				/* often a misplaced class descriptor */
@@ -1900,7 +1907,7 @@ static void dump_dfu_interface(unsigned char *buf)
 	if (buf[0] < 9)
 		return;
 	printf("        bcdDFUVersion                   %x.%02x\n",
-			buf[7], buf[8]);
+			buf[8], buf[7]);
 }
 
 static void dump_hub(char *prefix, unsigned char *p, int has_tt)
