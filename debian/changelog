@@ -1,3 +1,59 @@
+usbutils (1:005-3) unstable; urgency=low
+
+  * Update usb.ids.
+  * Add an entry for Bamboo Pen.  Closes: #669050. 
+  * Fix a typo in usb-devices (1).  Closes: #646167.
+  * Bumped Standards-Version to 3.9.3 (no changes).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 23 Apr 2012 18:48:45 +0200
+
+usbutils (1:005-2) unstable; urgency=low
+
+  * Add an entry for Huawei E173.  Closes: #654195. 
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 02 Jan 2012 13:48:31 +0100
+
+usbutils (1:005-1) unstable; urgency=low
+
+  * New upstream release.
+  * Update usb.ids.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 11 Dec 2011 20:26:01 +0100
+
+usbutils (1:004-2) unstable; urgency=high
+
+  * Install usbutils.pc in the correct path.  Closes: #639717.
+  * Set severity to high, as the bug affects testing.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 29 Aug 2011 20:43:24 +0200
+
+usbutils (1:004-1) unstable; urgency=low
+
+  * New upstream release.
+  * Use .xz for the debian.tar file.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sat, 27 Aug 2011 17:59:40 +0200
+
+usbutils (1:003-1) unstable; urgency=low
+
+  * New upstream version. 
+  * Bumped Standards-Version to 3.9.2 (no changes).
+  * Switch to dpkg-source 3.0 (quilt) format.
+  * Update usb.ids.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Fri, 12 Aug 2011 23:18:04 +0200
+
+usbutils (1:001-1) unstable; urgency=low
+
+  * New upstream version, with new version numbering system.
+  * Switch build-dependencies from libusb-dev to libusb-1.0-0-dev.
+  * Update usb.ids.
+  * Fix 13fe:3100 entry, 4GB versions of the device also exists.  
+    Closes: bug#599817.
+  * Bumped Standards-Version to 3.9.1 (no changes).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 06 Feb 2011 13:32:44 +0100
+
 usbutils (0.87-5) unstable; urgency=low
 
   * Update usb.ids.  Closes: bug#587379.

@@ -26,19 +26,22 @@ clean:
 	dh_testroot
 	-rm -f *-stamp
 	-rm -rf build-deb build-udeb
+	-rm -rf debian/tmp-deb debian/tmp-udeb
 	-rm -f config.guess config.sub
 	dh_clean
 
-update-config: update-config-stamp
-update-config-stamp:
+config-common: config-common-stamp
+config-common-stamp:
 	-test -r /usr/share/misc/config.sub && \
 	cp -f /usr/share/misc/config.sub config.sub
 	-test -r /usr/share/misc/config.guess && \
 	cp -f /usr/share/misc/config.guess config.guess
+
+	chmod +x configure usbhid-dump/configure
 	
 	touch $@
 
-build-deb/config.status: update-config-stamp
+build-deb/config.status: config-common-stamp
 	dh_testdir
 
 	mkdir -p build-deb
@@ -51,7 +54,7 @@ build-deb/config.status: update-config-stamp
 		--mandir=\$${prefix}/share/man \
 		--infodir=\$${prefix}/share/info
 
-build-udeb/config.status: update-config-stamp
+build-udeb/config.status: config-common-stamp
 	dh_testdir
 
 	mkdir -p build-udeb
@@ -64,7 +67,10 @@ build-udeb/config.status: update-config-stamp
 		--mandir=\$${prefix}/share/man \
 		--infodir=\$${prefix}/share/info
 
-build: build-deb-stamp build-udeb-stamp 
+build: build-arch build-indep
+build-indep:
+
+build-arch: build-deb-stamp build-udeb-stamp 
 build-deb-stamp: build-deb/config.status
 	dh_testdir
 
@@ -77,24 +83,19 @@ build-udeb-stamp: build-udeb/config.status
 	$(MAKE) -C build-udeb
 	touch $@
 
-install: install-deb-stamp install-udeb-stamp
-install-deb-stamp: build-deb-stamp
+install: install-stamp
+install-stamp: build-deb-stamp build-udeb-stamp
 	dh_testdir
 	dh_testroot
 	dh_installdirs -a
 
-	$(MAKE) -C build-deb install DESTDIR=$(CURDIR)/debian/usbutils pkgconfigdir=/usr/share/pkgconfig
-	mv $(CURDIR)/debian/usbutils/usr/sbin/update-usbids.sh $(CURDIR)/debian/usbutils/usr/sbin/update-usbids
-	rm $(CURDIR)/debian/usbutils/var/lib/usbutils/usb.ids.gz
+	$(MAKE) -C build-deb install DESTDIR=$(CURDIR)/debian/tmp-deb pkgconfigdir=/usr/share/pkgconfig
+	mv $(CURDIR)/debian/tmp-deb/usr/sbin/update-usbids.sh $(CURDIR)/debian/tmp-deb/usr/sbin/update-usbids
+	$(MAKE) -C build-udeb install DESTDIR=$(CURDIR)/debian/tmp-udeb pkgconfigdir=/usr/share/pkgconfig
+
+	dh_install -a
+
 	touch $@
-
-install-udeb-stamp: build-udeb-stamp
-	dh_testdir
-	dh_testroot
-	dh_installdirs -a
-
-	install -m 755 -o root -g root build-udeb/lsusb $(CURDIR)/debian/usbutils-udeb/usr/bin/
-	gzip -9 -n -c usb.ids > $(CURDIR)/debian/usbutils-udeb/usr/share/misc/usb.ids.gz
 
 # Build architecture-independent files here.
 binary-indep: build install
@@ -123,4 +124,4 @@ binary-arch: build install
 	dh_builddeb
 
 binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install
+.PHONY: build build-arch build-indep clean binary-indep binary-arch binary install

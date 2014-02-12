@@ -2,8 +2,8 @@ Source: usbutils
 Section: utils
 Priority: optional
 Maintainer: Aurelien Jarno <aurel32@debian.org>
-Build-Depends: debhelper (>> 5.0.22), autotools-dev, libusb-dev (>= 0.1.6), pkg-config, zlib1g-dev
-Standards-Version: 3.8.4
+Build-Depends: debhelper (>> 5.0.22), autotools-dev, libusb-1.0-0-dev, pkg-config, zlib1g-dev
+Standards-Version: 3.9.3
 
 Package: usbutils
 Architecture: any

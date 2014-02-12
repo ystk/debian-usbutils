@@ -14,21 +14,19 @@
  *      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *      GNU General Public License for more details.
  *
- *      You should have received a copy of the GNU General Public License
- *      along with this program; if not, write to the Free Software
- *      Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
  *
  */
 
 /*****************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <limits.h>
 
 #include "usbmisc.h"
 
@@ -118,24 +116,32 @@ static char *get_absolute_path(const char *path, char *result,
 	return result;
 }
 
-struct usb_device *get_usb_device(const char *path)
+libusb_device *get_usb_device(libusb_context *ctx, const char *path)
 {
-	struct usb_bus *bus;
-	struct usb_device *dev;
+	libusb_device **list;
+	libusb_device *dev;
+	ssize_t num_devs, i;
 	char device_path[PATH_MAX + 1];
 	char absolute_path[PATH_MAX + 1];
 
 	readlink_recursive(path, device_path, sizeof(device_path));
 	get_absolute_path(device_path, absolute_path, sizeof(absolute_path));
 
-	for (bus = usb_busses; bus; bus = bus->next) {
-		for (dev = bus->devices; dev; dev = dev->next) {
-			snprintf(device_path, sizeof(device_path), "%s/%s/%s",
-				 devbususb, bus->dirname, dev->filename);
-			if (!strcmp(device_path, absolute_path))
-				return dev;
+	dev = NULL;
+	num_devs = libusb_get_device_list(ctx, &list);
+
+	for (i = 0; i < num_devs; ++i) {
+		uint8_t bnum = libusb_get_bus_number(list[i]);
+		uint8_t dnum = libusb_get_device_address(list[i]);
+
+		snprintf(device_path, sizeof(device_path), "%s/%03u/%03u",
+			 devbususb, bnum, dnum);
+		if (!strcmp(device_path, absolute_path)) {
+			dev = list[i];
+			break;
 		}
 	}
-	return NULL;
-}
 
+	libusb_free_device_list(list, 0);
+	return dev;
+}
