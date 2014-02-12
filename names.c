@@ -14,14 +14,14 @@
  *      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *      GNU General Public License for more details.
  *
- *      You should have received a copy of the GNU General Public License
- *      along with this program; if not, write to the Free Software
- *      Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
  *
  */
 
 /*****************************************************************************/
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -33,10 +33,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <ctype.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #ifdef HAVE_LIBZ
 #include <zlib.h>
@@ -270,6 +266,32 @@ const char *names_videoterminal(u_int16_t termt)
 
 /* ---------------------------------------------------------------------- */
 
+int get_vendor_string(char *buf, size_t size, u_int16_t vid)
+{
+        const char *cp;
+
+        if (size < 1)
+                return 0;
+        *buf = 0;
+        if (!(cp = names_vendor(vid)))
+                return 0;
+        return snprintf(buf, size, "%s", cp);
+}
+
+int get_product_string(char *buf, size_t size, u_int16_t vid, u_int16_t pid)
+{
+        const char *cp;
+
+        if (size < 1)
+                return 0;
+        *buf = 0;
+        if (!(cp = names_product(vid, pid)))
+                return 0;
+        return snprintf(buf, size, "%s", cp);
+}
+
+/* ---------------------------------------------------------------------- */
+
 static int new_vendor(const char *name, u_int16_t vendorid)
 {
 	struct vendor *v;
@@ -466,6 +488,139 @@ static int new_countrycode(const char *name, unsigned int countrycode)
 }
 
 /* ---------------------------------------------------------------------- */
+
+static void free_vendor(void)
+{
+	struct vendor *cur, *tmp;
+	int i;
+
+	for (i = 0; i < HASHSZ; i++) {
+		cur = vendors[i];
+		while (cur) {
+			tmp = cur;
+			cur = cur->next;
+			free(tmp);
+		}
+	}
+}
+
+static void free_product(void)
+{
+	struct product *cur, *tmp;
+	int i;
+
+	for (i = 0; i < HASHSZ; i++) {
+		cur = products[i];
+		while (cur) {
+			tmp = cur;
+			cur = cur->next;
+			free(tmp);
+		}
+	}
+}
+
+static void free_class(void)
+{
+	struct class *cur, *tmp;
+	int i;
+
+	for (i = 0; i < HASHSZ; i++) {
+		cur = classes[i];
+		while (cur) {
+			tmp = cur;
+			cur = cur->next;
+			free(tmp);
+		}
+	}
+}
+
+static void free_subclass(void)
+{
+	struct subclass *cur, *tmp;
+	int i;
+
+	for (i = 0; i < HASHSZ; i++) {
+		cur = subclasses[i];
+		while (cur) {
+			tmp = cur;
+			cur = cur->next;
+			free(tmp);
+		}
+	}
+}
+
+static void free_protocol(void)
+{
+	struct protocol *cur, *tmp;
+	int i;
+
+	for (i = 0; i < HASHSZ; i++) {
+		cur = protocols[i];
+		while (cur) {
+			tmp = cur;
+			cur = cur->next;
+			free(tmp);
+		}
+	}
+}
+
+static void free_audioterminal(void)
+{
+	struct audioterminal *cur, *tmp;
+	int i;
+
+	for (i = 0; i < HASHSZ; i++) {
+		cur = audioterminals[i];
+		while (cur) {
+			tmp = cur;
+			cur = cur->next;
+			free(tmp);
+		}
+	}
+	return;
+}
+
+static void free_videoterminal(void)
+{
+	struct videoterminal *cur, *tmp;
+	int i;
+
+	for (i = 0; i < HASHSZ; i++) {
+		cur = videoterminals[i];
+		while (cur) {
+			tmp = cur;
+			cur = cur->next;
+			free(tmp);
+		}
+	}
+}
+
+static void _free_genericstrtable(struct genericstrtable *t[HASHSZ])
+{
+	struct genericstrtable *cur, *tmp;
+	int i;
+
+	for (i = 0; i < HASHSZ; i++) {
+		cur = t[i];
+		while (cur) {
+			tmp = cur;
+			cur = cur->next;
+			free(tmp);
+		}
+	}
+}
+
+static void free_genericstrtable(void)
+{
+	_free_genericstrtable(hiddescriptors);
+	_free_genericstrtable(reports);
+	_free_genericstrtable(huts);
+	_free_genericstrtable(biass);
+	_free_genericstrtable(physdess);
+	_free_genericstrtable(hutus);
+	_free_genericstrtable(langids);
+	_free_genericstrtable(countrycodes);
+}
 
 #define DBG(x)
 
@@ -815,4 +970,16 @@ int names_init(char *n)
 	parse(f);
 	usb_close(f);
 	return 0;
+}
+
+void names_exit(void)
+{
+	free_vendor();
+	free_product();
+	free_class();
+	free_subclass();
+	free_protocol();
+	free_audioterminal();
+	free_videoterminal();
+	free_genericstrtable();
 }
