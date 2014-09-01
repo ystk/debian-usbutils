@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010 Nikolai Kondrashov
+# Copyright (C) 2010-2011 Nikolai Kondrashov
 #
 # This file is part of usbhid-dump.
 #
@@ -20,9 +20,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([usbhid-dump], [1.2])
+AC_INIT([usbhid-dump], [1.3])
 AC_CONFIG_AUX_DIR([auxdir])
 AM_INIT_AUTOMAKE([1.9 -Wall foreign])
+AM_MAINTAINER_MODE
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -31,7 +32,7 @@ CFLAGS=$CFLAGS
 CFLAGS="-Os -Wall $CFLAGS"
 ABS_SRCDIR=`cd ${srcdir} ; pwd`
 ABS_BUILDDIR=`pwd`
-CPPFLAGS="-I${ABS_BUILDDIR} -I${ABS_BUILDDIR}/include -D_GNU_SOURCE -DNDEBUG $CPPFLAGS"
+CPPFLAGS="-I${ABS_BUILDDIR} -I${ABS_BUILDDIR}/include -DNDEBUG $CPPFLAGS"
 if test "$ABS_SRCDIR" != "$ABS_BUILDDIR"; then
     CPPFLAGS="-I${ABS_SRCDIR}/include $CPPFLAGS"
 fi
@@ -47,10 +48,9 @@ AC_PROG_LIBTOOL
 #
 # Checks for libraries.
 #
-AC_CHECK_LIB(
-    [usb-1.0], [libusb_init], [],
-    [AC_MSG_FAILURE([libusb is required, but was not found, abort.
-                     Try installing libusb-1.0-0-dev or libusb1-devel.])])
+PKG_CHECK_MODULES(LIBUSB, libusb-1.0 >= 1.0.0)
+CFLAGS="$CFLAGS $LIBUSB_CFLAGS"
+LIBS="$LIBS $LIBUSB_LIBS"
 
 #
 # Checks for features
@@ -86,6 +86,7 @@ fi
 #
 # Checks for library functions.
 #
+AC_CHECK_FUNCS(libusb_strerror)
 
 #
 # Output
@@ -94,5 +95,6 @@ AC_CONFIG_FILES([Makefile
                  include/Makefile
                  include/uhd/Makefile
                  lib/Makefile
-                 src/Makefile])
+                 src/Makefile
+                 doc/Makefile])
 AC_OUTPUT

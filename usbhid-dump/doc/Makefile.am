@@ -1,6 +1,4 @@
-#!/bin/bash
-#
-# Copyright (c) 2010 Nikolai Kondrashov
+# Copyright (C) 2010 Nikolai Kondrashov
 #
 # This file is part of usbhid-dump.
 #
@@ -18,20 +16,4 @@
 # along with usbhid-dump; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-# Fail on any error
-set -e
-
-cat > ChangeLog <<CUT
-# Dummy ChangeLog, replaced with git log when distribution is created.
-CUT
-
-aclocal -I m4
-if command -v libtoolize >/dev/null; then
-    libtoolize
-else
-    # Try glibtoolize, if libtoolize is not found - could happen on Darwin
-    glibtoolize
-fi
-autoheader
-automake --add-missing
-autoconf
+dist_man_MANS = usbhid-dump.8

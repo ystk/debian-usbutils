@@ -24,9 +24,13 @@
  * @(#) $Id$
  */
 
+#include "config.h"
+
 #include "uhd/libusb.h"
 #include <stdbool.h>
 
+
+#ifndef HAVE_LIBUSB_STRERROR
 const char *
 libusb_strerror(enum libusb_error err)
 {
@@ -67,3 +71,4 @@ libusb_strerror(enum libusb_error err)
             return "Unknown error code";
     }
 }
+#endif

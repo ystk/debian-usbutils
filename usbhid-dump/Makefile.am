@@ -16,7 +16,7 @@
 # along with usbhid-dump; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-SUBDIRS = include lib src
+SUBDIRS = include lib src doc
 
 dist_noinst_SCRIPTS = bootstrap
 
