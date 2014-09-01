@@ -1,6 +1,6 @@
 /** @file
  * @brief usbhid-dump - entry point *
- * Copyright (C) 2010 Nikolai Kondrashov
+ * Copyright (C) 2010-2011 Nikolai Kondrashov
  *
  * This file is part of usbhid-dump.
  *
@@ -23,14 +23,16 @@
  * @(#) $Id$
  */
 
+#include "config.h"
+
 #include "uhd/iface_list.h"
-#include "uhd/str.h"
 #include "uhd/libusb.h"
 #include "uhd/misc.h"
 
 #include <assert.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <limits.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
@@ -38,37 +40,39 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <stdio.h>
-#include <libusb-1.0/libusb.h>
 
-#include "config.h"
+/* Define LIBUSB_CALL for libusb <= 1.0.8 */
+#ifndef LIBUSB_CALL
+#define LIBUSB_CALL
+#endif
 
-#define ERROR(_fmt, _args...) \
+#define GENERIC_ERROR(_fmt, _args...) \
     fprintf(stderr, _fmt "\n", ##_args)
 
 #define IFACE_ERROR(_iface, _fmt, _args...) \
-    ERROR("%s:" _fmt, _iface->addr_str, ##_args)
+    GENERIC_ERROR("%s:" _fmt, _iface->addr_str, ##_args)
 
-#define FAILURE(_fmt, _args...) \
-    ERROR("Failed to " _fmt, ##_args)
+#define GENERIC_FAILURE(_fmt, _args...) \
+    GENERIC_ERROR("Failed to " _fmt, ##_args)
 
 #define IFACE_FAILURE(_iface, _fmt, _args...) \
     IFACE_ERROR(_iface, "Failed to " _fmt, ##_args)
 
 #define LIBUSB_FAILURE(_fmt, _args...) \
-    FAILURE(_fmt ": %s", ##_args, libusb_strerror(err))
+    GENERIC_FAILURE(_fmt ": %s", ##_args, libusb_strerror(err))
 
 #define LIBUSB_IFACE_FAILURE(_iface, _fmt, _args...) \
     IFACE_FAILURE(_iface, _fmt ": %s", ##_args, libusb_strerror(err))
 
 #define ERROR_CLEANUP(_fmt, _args...) \
     do {                                \
-        ERROR(_fmt, ##_args);           \
+        GENERIC_ERROR(_fmt, ##_args);   \
         goto cleanup;                   \
     } while (0)
 
 #define FAILURE_CLEANUP(_fmt, _args...) \
     do {                                \
-        FAILURE(_fmt, ##_args);         \
+        GENERIC_FAILURE(_fmt, ##_args); \
         goto cleanup;                   \
     } while (0)
 
@@ -153,7 +157,7 @@ dump(const uhd_iface   *iface,
         buf[1] = xd[b >> 4];
         buf[2] = xd[b & 0xF];
 
-        fwrite(buf, ((pos % 16 == 0) ? 4 : 3), 1, stdout);
+        (void)fwrite(buf, ((pos % 16 == 0) ? 4 : 3), 1, stdout);
     }
 
     if (pos % 16 != 1)
@@ -193,7 +197,7 @@ dump_iface_list_descriptor(const uhd_iface *list)
 }
 
 
-static void
+static void LIBUSB_CALL
 dump_iface_list_stream_cb(struct libusb_transfer *transfer)
 {
     enum libusb_error   err;
@@ -593,7 +597,7 @@ parse_number_pair(const char   *str,
     p = str;
 
     /* Skip space (prevent strtol doing so) */
-    while (isspace(*p))
+    while (isspace((int)*p))
         p++;
 
     /* Extract the first number */
@@ -610,7 +614,7 @@ parse_number_pair(const char   *str,
     p = end;
 
     /* Skip space */
-    while (isspace(*p))
+    while (isspace((int)*p))
         p++;
 
     /* If it is the end of string */
@@ -626,7 +630,7 @@ parse_number_pair(const char   *str,
         p++;
 
         /* Skip space (prevent strtol doing so) */
-        while (isspace(*p))
+        while (isspace((int)*p))
             p++;
 
         /* Extract the second number */
@@ -642,7 +646,7 @@ parse_number_pair(const char   *str,
         p = end;
 
         /* Skip space */
-        while (isspace(*p))
+        while (isspace((int)*p))
             p++;
 
         /* If it is not the end of string */
@@ -725,7 +729,7 @@ parse_iface_num(const char *str,
     p = str;
 
     /* Skip space (prevent strtol doing so) */
-    while (isspace(*p))
+    while (isspace((int)*p))
         p++;
 
     /* Extract interface number */
@@ -755,7 +759,7 @@ parse_timeout(const char   *str,
     p = str;
 
     /* Skip space (prevent strtoll doing so) */
-    while (isspace(*p))
+    while (isspace((int)*p))
         p++;
 
     /* Extract timeout */
@@ -788,7 +792,7 @@ PACKAGE_STRING "\n"
 
 
 static bool
-usage(FILE *stream)
+usage(FILE *stream, const char *name)
 {
     return
         fprintf(
@@ -826,7 +830,7 @@ usage(FILE *stream)
 "Signals:\n"
 "  USR1/USR2                        pause/resume the stream dump output\n"
 "\n",
-            program_invocation_short_name) >= 0;
+            name) >= 0;
 }
 
 
@@ -897,7 +901,9 @@ main(int argc, char **argv)
 {
     int                 result;
 
-    char                c;
+    const char         *name;
+
+    int                 c;
 
     uint8_t             bus_num         = UHD_BUS_NUM_ANY;
     uint8_t             dev_addr        = UHD_DEV_ADDR_ANY;
@@ -913,10 +919,19 @@ main(int argc, char **argv)
 
     struct sigaction    sa;
 
+    /*
+     * Extract program invocation name
+     */
+    name = rindex(argv[0], '/');
+    if (name == NULL)
+        name = argv[0];
+    else
+        name++;
+
 #define USAGE_ERROR(_fmt, _args...) \
     do {                                        \
         fprintf(stderr, _fmt "\n", ##_args);    \
-        usage(stderr);                          \
+        usage(stderr, name);                    \
         return 1;                               \
     } while (0)
 
@@ -929,7 +944,7 @@ main(int argc, char **argv)
         switch (c)
         {
             case OPT_VAL_HELP:
-                usage(stdout);
+                usage(stdout, name);
                 return 0;
                 break;
             case OPT_VAL_VERSION:
@@ -981,7 +996,7 @@ main(int argc, char **argv)
                 stream_feedback = 1;
                 break;
             case '?':
-                usage(stderr);
+                usage(stderr, name);
                 return 1;
                 break;
         }

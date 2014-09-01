@@ -1,0 +1,15 @@
+---
+ configure.ac |    2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -6,6 +6,8 @@
+ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+ AC_PREFIX_DEFAULT([/usr])
+ 
++AM_MAINTAINER_MODE
++
+ AC_USE_SYSTEM_EXTENSIONS
+ AC_SYS_LARGEFILE
+ 

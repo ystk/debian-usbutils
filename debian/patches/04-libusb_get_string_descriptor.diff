@@ -1,0 +1,44 @@
+--- usbutils-007.orig/configure.ac
++++ usbutils-007/configure.ac
+@@ -25,6 +25,9 @@ AC_ARG_ENABLE(usbids,
+ AM_CONDITIONAL([INSTALL_USBIDS], [test "x$enable_usbids" != "xno"])
+ 
+ PKG_CHECK_MODULES(LIBUSB, libusb-1.0 >= 1.0.0)
++CFLAGS="$CFLAGS $LIBUSB_CFLAGS"
++LIBS="$LIBS $LIBUSB_LIBS"
++AC_CHECK_DECLS([libusb_get_string_descriptor], [], [], [#include <libusb.h>])
+ 
+ AC_CONFIG_HEADERS([config.h])
+ AC_CONFIG_FILES([
+--- usbutils-007.orig/usbmisc.c
++++ usbutils-007/usbmisc.c
+@@ -171,7 +171,8 @@ static char *get_dev_string_ascii(libusb
+ 	return buf;
+ }
+ 
+-#if defined(HAVE_NL_LANGINFO) && defined(HAVE_ICONV)
++#if defined(HAVE_NL_LANGINFO) && defined(HAVE_ICONV) && \
++    HAVE_DECL_LIBUSB_GET_STRING_DESCRIPTOR
+ static u_int16_t get_any_langid(libusb_device_handle *dev)
+ {
+ 	unsigned char buf[4];
+@@ -212,7 +213,8 @@ static char *usb_string_to_native(char *
+ 
+ char *get_dev_string(libusb_device_handle *dev, u_int8_t id)
+ {
+-#if defined(HAVE_NL_LANGINFO) && defined(HAVE_ICONV)
++#if defined(HAVE_NL_LANGINFO) && defined(HAVE_ICONV) && \
++    HAVE_DECL_LIBUSB_GET_STRING_DESCRIPTOR
+ 	int ret;
+ 	char *buf, unicode_buf[254];
+ 	u_int16_t langid;
+@@ -220,7 +222,8 @@ char *get_dev_string(libusb_device_handl
+ 
+ 	if (!dev || !id) return strdup("");
+ 
+-#if defined(HAVE_NL_LANGINFO) && defined(HAVE_ICONV)
++#if defined(HAVE_NL_LANGINFO) && defined(HAVE_ICONV) && \
++    HAVE_DECL_LIBUSB_GET_STRING_DESCRIPTOR
+ 	langid = get_any_langid(dev);
+ 	if (!langid) return strdup("(error)");
+ 

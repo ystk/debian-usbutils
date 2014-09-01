@@ -1,7 +1,4 @@
-01-update-usb-ids.diff
-02-am-maintainer-mode.diff
-03-pkgconfig.diff
-04-missing-includes.diff
-05-debian-usb-ids.diff
-06-usb-devices-manpages.diff
-99-relibtoolize.diff
+02-ccid-typo.diff
+03-am-maintainer-mode.diff
+04-libusb_get_string_descriptor.diff
+99-autoreconf.diff

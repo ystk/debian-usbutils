@@ -11,9 +11,11 @@
 
 #include "list.h"
 #include "lsusb.h"
+#include "names.h"
 
 #define MY_SYSFS_FILENAME_LEN 255
 #define MY_PATH_MAX 4096
+#define MY_PARAM_MAX 64
 
 struct usbinterface {
 	struct list_head list;
@@ -48,7 +50,7 @@ struct usbdevice {
 	unsigned int bDeviceProtocol;
 	unsigned int bDeviceSubClass;
 	unsigned int bMaxPacketSize0;
-	char bMaxPower[64];
+	char bMaxPower[MY_PARAM_MAX];
 	unsigned int bNumConfigurations;
 	unsigned int bNumInterfaces;
 	unsigned int bcdDevice;
@@ -58,11 +60,11 @@ struct usbdevice {
 	unsigned int idProduct;
 	unsigned int idVendor;
 	unsigned int maxchild;
-	char manufacturer[64];
-	char product[64];
-	char serial[64];
-	char version[64];
-	char speed[5 + 1];	/* '1.5','12','480','5000' + '\n' */
+	char manufacturer[MY_PARAM_MAX];
+	char product[MY_PARAM_MAX];
+	char serial[MY_PARAM_MAX];
+	char version[MY_PARAM_MAX];
+	char speed[MY_PARAM_MAX];	/* '1.5','12','480','5000' + '\n' */
 
 	char name[MY_SYSFS_FILENAME_LEN];
 	char driver[MY_SYSFS_FILENAME_LEN];
@@ -84,7 +86,7 @@ struct usbbusnode {
 
 #define SYSFS_INTu(de,tgt, name) do { tgt->name = read_sysfs_file_int(de,#name,10); } while(0)
 #define SYSFS_INTx(de,tgt, name) do { tgt->name = read_sysfs_file_int(de,#name,16); } while(0)
-#define SYSFS_STR(de,tgt, name) do { read_sysfs_file_string(de, #name, tgt->name, MY_SYSFS_FILENAME_LEN); } while(0)
+#define SYSFS_STR(de,tgt, name) do { read_sysfs_file_string(de, #name, tgt->name, MY_PARAM_MAX); } while(0)
 
 LIST_HEAD(interfacelist);
 LIST_HEAD(usbdevlist);
@@ -116,58 +118,6 @@ static void dump_usbinterface(struct usbinterface *i)
 #endif
 
 static char tmp_str[128];
-static const char *bInterfaceClass_to_str(unsigned int dc)
-{
-	const char *s;
-	switch (dc) {
-	case 0:
-		s = ">ifc";
-		break;
-	case 1:
-		s = "audio";
-		break;
-	case 2:
-		s = "comm.";
-		break;
-	case 3:
-		s = "HID";
-		break;
-	case 5:
-		s = "PID";
-		break;
-	case 6:
-		s = "still";
-		break;
-	case 7:
-		s = "print";
-		break;
-	case 8:
-		s = "stor.";
-		break;
-	case 9:
-		s = "hub";
-		break;
-	case 10:
-		s = "data";
-		break;
-	case 11:
-		s = "scard";
-		break;
-	case 13:
-		s = "c-sec";
-		break;
-	case 254:
-		s = "app.";
-		break;
-	case 255:
-		s = "vend.";
-		break;
-	default:
-		snprintf(tmp_str, 128, "'bInterfaceClass 0x%02x not yet handled'", dc);;
-		s = tmp_str;
-	}
-	return s;
-}
 static const char *bDeviceClass_to_str(unsigned int dc)
 {
 	const char *s;
@@ -189,11 +139,15 @@ static void print_usbbusnode(struct usbbusnode *b)
 
 static void print_usbdevice(struct usbdevice *d, struct usbinterface *i)
 {
+	char subcls[128];
+
+	get_class_string(subcls, sizeof(subcls), i->bInterfaceClass);
+
 	if (i->bInterfaceClass == 9)
-		printf("Port %u: Dev %u, If %u, Class=%s, Driver=%s/%up, %sM\n", d->portnum, d->devnum, i->ifnum, bInterfaceClass_to_str(i->bInterfaceClass),
+		printf("Port %u: Dev %u, If %u, Class=%s, Driver=%s/%up, %sM\n", d->portnum, d->devnum, i->ifnum, subcls,
 		       i->driver, d->maxchild, d->speed);
 	else
-		printf("Port %u: Dev %u, If %u, Class=%s, Driver=%s, %sM\n", d->portnum, d->devnum, i->ifnum, bInterfaceClass_to_str(i->bInterfaceClass), i->driver,
+		printf("Port %u: Dev %u, If %u, Class=%s, Driver=%s, %sM\n", d->portnum, d->devnum, i->ifnum, subcls, i->driver,
 		       d->speed);
 }
 
@@ -256,8 +210,13 @@ static void read_sysfs_file_string(const char *d_name, const char *file, char *b
 
 static void append_dev_interface(struct usbinterface *i, struct usbinterface *new)
 {
-	while (i->next)
+	while (i->next) {
+		if (i == new)
+			return;
 		i = i->next;
+	}
+		if (i == new)
+			return;
 	i->next = new;
 }
 
@@ -276,8 +235,13 @@ static void append_businterface(unsigned int busnum, struct usbinterface *new)
 		if (b->busnum == busnum) {
 			i = b->first_interface;
 			if (i) {
-				while (i->next)
+				while (i->next) {
+					if (i == new)
+						return;
 					i = i->next;
+				}
+				if (i == new)
+					return;
 				i->next = new;
 			} else
 				b->first_interface = new;
@@ -318,7 +282,10 @@ static void add_usb_interface(const char *d_name)
 	p = pn + 1;
 	i = strtoul(p, &pn, 10);
 	if (!pn || p == pn)
+	{
+		free(e);
 		return;
+	}
 	e->ifnum = i;
 	if (snprintf(e->name, MY_SYSFS_FILENAME_LEN, "%s", d_name) >= MY_SYSFS_FILENAME_LEN)
 		printf("warning: '%s' truncated to '%s'\n", e->name, d_name);
@@ -331,9 +298,7 @@ static void add_usb_interface(const char *d_name)
 	l = snprintf(driver, MY_PATH_MAX, "%s/%s/driver", sys_bus_usb_devices, d_name);
 	if (l > 0 && l < MY_PATH_MAX) {
 		l = readlink(driver, driver, MY_PATH_MAX);
-		if (l < 0)
-			perror(d_name);
-		else {
+		if (l >= 0) {
 			if (l < MY_PATH_MAX - 1)
 				driver[l] = '\0';
 			else
@@ -363,7 +328,7 @@ static void add_usb_device(const char *d_name)
 		return;
 	memset(d, 0, sizeof(struct usbdevice));
 	d->busnum = i;
-	while (pn) {
+	while (*pn) {
 		p = pn + 1;
 		i = strtoul(p, &pn, 10);
 		if (p == pn)
@@ -396,9 +361,7 @@ static void add_usb_device(const char *d_name)
 	l = snprintf(driver, MY_PATH_MAX, "%s/%s/driver", sys_bus_usb_devices, d_name);
 	if (l > 0 && l < MY_PATH_MAX) {
 		l = readlink(driver, driver, MY_PATH_MAX);
-		if (l < 0)
-			perror(d_name);
-		else {
+		if (l >= 0) {
 			if (l < MY_PATH_MAX - 1)
 				driver[l] = '\0';
 			else
@@ -419,9 +382,7 @@ static void get_roothub_driver(struct usbbusnode *b, const char *d_name)
 	l = snprintf(path, MY_PATH_MAX, "%s/%s/../driver", sys_bus_usb_devices, d_name);
 	if (l > 0 && l < MY_PATH_MAX) {
 		l = readlink(path, path, MY_PATH_MAX);
-		if (l < 0)
-			perror(d_name);
-		else {
+		if (l >= 0) {
 			if (l < MY_PATH_MAX - 1)
 				path[l] = '\0';
 			else

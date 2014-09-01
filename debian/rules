@@ -11,12 +11,14 @@ DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 DEB_HOST_ARCH_OS    ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
 
-ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -g
-endif
 ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
+
+CFLAGS = -Wall -fPIC
+CFLAGS += $(shell dpkg-buildflags --get CFLAGS)
+CPPFLAGS += $(shell dpkg-buildflags --get CPPFLAGS)
+LDFLAGS += $(shell dpkg-buildflags --get LDFLAGS)
 
 CFLAGS_UDEB = $(CFLAGS)
 CFLAGS_UDEB += -Os
@@ -46,26 +48,30 @@ build-deb/config.status: config-common-stamp
 
 	mkdir -p build-deb
 
-	cd build-deb && CFLAGS="$(CFLAGS)" ../configure \
-		--host=$(DEB_HOST_GNU_TYPE) \
-		--build=$(DEB_BUILD_GNU_TYPE) \
-		--prefix=/usr \
-		--datadir=/var/lib/usbutils \
-		--mandir=\$${prefix}/share/man \
-		--infodir=\$${prefix}/share/info
+	cd build-deb && \
+		CFLAGS="$(CFLAGS)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" \
+		../configure \
+			--host=$(DEB_HOST_GNU_TYPE) \
+			--build=$(DEB_BUILD_GNU_TYPE) \
+			--prefix=/usr \
+			--datadir=/var/lib/usbutils \
+			--mandir=\$${prefix}/share/man \
+			--infodir=\$${prefix}/share/info
 
 build-udeb/config.status: config-common-stamp
 	dh_testdir
 
 	mkdir -p build-udeb
 
-	cd build-udeb && CFLAGS="$(CFLAGS_UDEB)" ../configure \
-		--host=$(DEB_HOST_GNU_TYPE) \
-		--build=$(DEB_BUILD_GNU_TYPE) \
-		--prefix=/usr \
-		--datadir=/usr/share/misc \
-		--mandir=\$${prefix}/share/man \
-		--infodir=\$${prefix}/share/info
+	cd build-udeb && \
+		CFLAGS="$(CFLAGS_UDEB)" CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" \
+		../configure \
+			--host=$(DEB_HOST_GNU_TYPE) \
+			--build=$(DEB_BUILD_GNU_TYPE) \
+			--prefix=/usr \
+			--datadir=/usr/share/misc \
+			--mandir=\$${prefix}/share/man \
+			--infodir=\$${prefix}/share/info
 
 build: build-arch build-indep
 build-indep:
@@ -121,7 +127,7 @@ binary-arch: build install
 	dh_shlibdeps 
 	dh_gencontrol
 	dh_md5sums 
-	dh_builddeb
+	dh_builddeb -- -Zxz
 
 binary: binary-indep binary-arch
 .PHONY: build build-arch build-indep clean binary-indep binary-arch binary install

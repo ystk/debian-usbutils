@@ -3,12 +3,13 @@ Section: utils
 Priority: optional
 Maintainer: Aurelien Jarno <aurel32@debian.org>
 Build-Depends: debhelper (>> 5.0.22), autotools-dev, libusb-1.0-0-dev, pkg-config, zlib1g-dev
-Standards-Version: 3.9.3
+Standards-Version: 3.9.4
 
 Package: usbutils
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Suggests: wget (>= 1.8.1-6) | lynx (>= 2.8.4.1b-3)
+Suggests: wget (>= 1.8.1-6) | lynx-cur
+Multi-Arch: foreign
 Description: Linux USB utilities 
  This package contains the lsusb utility for inspecting the devices 
  connected to the USB bus. It shows a graphical representation of the

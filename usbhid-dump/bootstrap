@@ -26,7 +26,12 @@ cat > ChangeLog <<CUT
 CUT
 
 aclocal -I m4
-libtoolize
+if command -v libtoolize >/dev/null; then
+    libtoolize
+else
+    # Try glibtoolize, if libtoolize is not found - could happen on Darwin
+    glibtoolize
+fi
 autoheader
 automake --add-missing
 autoconf

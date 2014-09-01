@@ -290,6 +290,30 @@ int get_product_string(char *buf, size_t size, u_int16_t vid, u_int16_t pid)
         return snprintf(buf, size, "%s", cp);
 }
 
+int get_class_string(char *buf, size_t size, u_int8_t cls)
+{
+	const char *cp;
+
+	if (size < 1)
+		return 0;
+	*buf = 0;
+	if (!(cp = names_class(cls)))
+		return 0;
+	return snprintf(buf, size, "%s", cp);
+}
+
+int get_subclass_string(char *buf, size_t size, u_int8_t cls, u_int8_t subcls)
+{
+	const char *cp;
+
+	if (size < 1)
+		return 0;
+	*buf = 0;
+	if (!(cp = names_subclass(cls, subcls)))
+		return 0;
+	return snprintf(buf, size, "%s", cp);
+}
+
 /* ---------------------------------------------------------------------- */
 
 static int new_vendor(const char *name, u_int16_t vendorid)
@@ -496,6 +520,7 @@ static void free_vendor(void)
 
 	for (i = 0; i < HASHSZ; i++) {
 		cur = vendors[i];
+		vendors[i] = NULL;
 		while (cur) {
 			tmp = cur;
 			cur = cur->next;
@@ -511,6 +536,7 @@ static void free_product(void)
 
 	for (i = 0; i < HASHSZ; i++) {
 		cur = products[i];
+		products[i] = NULL;
 		while (cur) {
 			tmp = cur;
 			cur = cur->next;
@@ -526,6 +552,7 @@ static void free_class(void)
 
 	for (i = 0; i < HASHSZ; i++) {
 		cur = classes[i];
+		classes[i] = NULL;
 		while (cur) {
 			tmp = cur;
 			cur = cur->next;
@@ -541,6 +568,7 @@ static void free_subclass(void)
 
 	for (i = 0; i < HASHSZ; i++) {
 		cur = subclasses[i];
+		subclasses[i] = NULL;
 		while (cur) {
 			tmp = cur;
 			cur = cur->next;
@@ -556,6 +584,7 @@ static void free_protocol(void)
 
 	for (i = 0; i < HASHSZ; i++) {
 		cur = protocols[i];
+		protocols[i] = NULL;
 		while (cur) {
 			tmp = cur;
 			cur = cur->next;
@@ -571,6 +600,7 @@ static void free_audioterminal(void)
 
 	for (i = 0; i < HASHSZ; i++) {
 		cur = audioterminals[i];
+		audioterminals[i] = NULL;
 		while (cur) {
 			tmp = cur;
 			cur = cur->next;
@@ -587,6 +617,7 @@ static void free_videoterminal(void)
 
 	for (i = 0; i < HASHSZ; i++) {
 		cur = videoterminals[i];
+		videoterminals[i] = NULL;
 		while (cur) {
 			tmp = cur;
 			cur = cur->next;
@@ -602,6 +633,7 @@ static void _free_genericstrtable(struct genericstrtable *t[HASHSZ])
 
 	for (i = 0; i < HASHSZ; i++) {
 		cur = t[i];
+		t[i] = NULL;
 		while (cur) {
 			tmp = cur;
 			cur = cur->next;

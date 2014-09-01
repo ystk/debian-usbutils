@@ -1,3 +1,37 @@
+usbutils (1:007-2) unstable; urgency=low
+
+  * Add 03-am-maintainer-mode.diff, 04-libusb_get_string_descriptor.diff
+    and 99-autoreconf.diff to support libusb 1.0 versions without
+    libusb_get_string_descriptor().
+  * Bumped Standards-Version to 3.9.4 (no changes).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 10 Jun 2013 17:27:41 +0200
+
+usbutils (1:007-1) unstable; urgency=low
+
+  * New upstream version.  Closes: #711579.
+    - Remove 01-update-usb-ids.diff, 02-usbdevices-quotes.diff.
+    - Add 02-ccid-typo.diff to fix a typo.
+  * Suggests lynx-cur instead of lynx.  Closes: #710583.
+  * Fix update-usbids manpage.  Closes: #675089.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 10 Jun 2013 00:59:14 +0200
+
+usbutils (1:006-1) unstable; urgency=low
+
+  * New upstream version:
+    - Remove 02-am-maintainer-mode.diff, 03-pkgconfig.diff,
+      04-missing-includes.diff, 05-debian-usb-ids.diff,
+      06-usb-devices-manpages.diff and 99-relibtoolize.diff.
+  * Add debian/patches/02-usbdevices-quotes.diff to fix quoting issues
+    in usb-devices.  Closes: #694043.
+  * Update usb.ids.  Closes: #696527.
+  * Set usbutils package as Multi-Arch: foreign.  Closes: #697775.
+  * Correctly pass CPPFLAGS and LDFLAGS to build with hardening support.
+  * Compress .deb with xz.  
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 06 May 2013 23:14:16 +0200
+
 usbutils (1:005-3) unstable; urgency=low
 
   * Update usb.ids.
